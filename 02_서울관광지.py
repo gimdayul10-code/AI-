@@ -1,4 +1,3 @@
-
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
@@ -257,3 +256,7 @@ st.markdown(
     "[서울시 외국인 관광객 분석]"
     "(https://english.seoul.go.kr/from-k-culture-to-k-hiking-foreign-tourists-venture-beyond-seouls-top-attractions/)"
 )
+
+streamlit>=1.36.0
+folium>=0.17.0
+streamlit-folium>=0.22.0
