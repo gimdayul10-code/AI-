@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -25,32 +26,37 @@ st.write(
 # 3. CSV 파일 경로 설정
 # -------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 CSV_FILE = BASE_DIR / "countriesMBTI_16types(2).csv"
 
 # -------------------------
 # 4. CSV 데이터 불러오기
 # -------------------------
 @st.cache_data
-def load_data(file_path):
+def load_data():
+    if not CSV_FILE.exists():
+        raise FileNotFoundError(
+            f"CSV 파일을 찾을 수 없습니다: {CSV_FILE}"
+        )
+
     try:
-        return pd.read_csv(file_path, encoding="utf-8-sig")
+        data = pd.read_csv(
+            CSV_FILE,
+            encoding="utf-8-sig"
+        )
     except UnicodeDecodeError:
-        return pd.read_csv(file_path, encoding="cp949")
+        data = pd.read_csv(
+            CSV_FILE,
+            encoding="cp949"
+        )
+
+    return data
 
 try:
-    df = load_data(CSV_FILE)
-
-except FileNotFoundError:
-    st.error("❌ CSV 파일을 찾을 수 없습니다.")
-    st.write(f"확인한 경로: {CSV_FILE}")
-    st.info(
-        "CSV 파일이 프로젝트 최상위 폴더에 있는지 확인해 주세요."
-    )
-    st.stop()
+    df = load_data()
 
 except Exception as e:
-    st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
+    st.error("❌ 데이터를 불러오지 못했습니다.")
+    st.code(str(e))
     st.stop()
 
 # -------------------------
@@ -66,10 +72,9 @@ mbti_types = [
 ]
 
 if len(mbti_types) != 16:
-    st.error("MBTI 유형 데이터가 16개가 아닙니다.")
+    st.error("MBTI 데이터 열이 16개가 아닙니다.")
     st.stop()
 
-# 데이터 정리
 df["Country"] = df["Country"].astype(str).str.strip()
 
 for mbti in mbti_types:
@@ -79,7 +84,7 @@ for mbti in mbti_types:
     )
 
 df = df.dropna(subset=["Country"])
-df = df.dropna(subset=mbti_types, how="all")
+df = df[df["Country"] != ""]
 
 countries = sorted(
     df["Country"].unique().tolist()
@@ -120,7 +125,6 @@ if chart_data.empty:
     st.warning("선택한 국가의 데이터가 없습니다.")
     st.stop()
 
-# 높은 비율부터 정렬
 chart_data = chart_data.sort_values(
     by="비율",
     ascending=False
