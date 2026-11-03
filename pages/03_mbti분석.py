@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -23,10 +22,15 @@ st.write(
 )
 
 # -------------------------
-# 3. CSV 데이터 불러오기
+# 3. CSV 파일 경로 설정
 # -------------------------
-CSV_FILE = Path(__file__).parent / "countriesMBTI_16types.csv"
+BASE_DIR = Path(__file__).resolve().parent.parent
 
+CSV_FILE = BASE_DIR / "countriesMBTI_16types(2).csv"
+
+# -------------------------
+# 4. CSV 데이터 불러오기
+# -------------------------
 @st.cache_data
 def load_data(file_path):
     try:
@@ -35,13 +39,13 @@ def load_data(file_path):
         return pd.read_csv(file_path, encoding="cp949")
 
 try:
-    df = load_data(str(CSV_FILE))
+    df = load_data(CSV_FILE)
 
 except FileNotFoundError:
     st.error("❌ CSV 파일을 찾을 수 없습니다.")
+    st.write(f"확인한 경로: {CSV_FILE}")
     st.info(
-        "countriesMBTI_16types.csv 파일을 "
-        "app.py와 같은 폴더에 업로드해 주세요."
+        "CSV 파일이 프로젝트 최상위 폴더에 있는지 확인해 주세요."
     )
     st.stop()
 
@@ -50,7 +54,7 @@ except Exception as e:
     st.stop()
 
 # -------------------------
-# 4. 데이터 확인 및 정리
+# 5. 데이터 확인
 # -------------------------
 if "Country" not in df.columns:
     st.error("CSV 파일에 Country 열이 없습니다.")
@@ -62,17 +66,16 @@ mbti_types = [
 ]
 
 if len(mbti_types) != 16:
-    st.error(
-        f"MBTI 데이터 열이 16개가 아닙니다. "
-        f"현재 {len(mbti_types)}개입니다."
-    )
+    st.error("MBTI 유형 데이터가 16개가 아닙니다.")
     st.stop()
 
+# 데이터 정리
 df["Country"] = df["Country"].astype(str).str.strip()
 
 for mbti in mbti_types:
     df[mbti] = pd.to_numeric(
-        df[mbti], errors="coerce"
+        df[mbti],
+        errors="coerce"
     )
 
 df = df.dropna(subset=["Country"])
@@ -82,25 +85,24 @@ countries = sorted(
     df["Country"].unique().tolist()
 )
 
-if len(countries) == 0:
-    st.error("표시할 국가 데이터가 없습니다.")
+if not countries:
+    st.warning("표시할 국가 데이터가 없습니다.")
     st.stop()
 
 # -------------------------
-# 5. 국가 선택
+# 6. 국가 선택
 # -------------------------
 selected_country = st.selectbox(
     "🗺️ 국가를 선택하세요!",
     countries
 )
 
-# 선택한 국가 데이터
 country_data = df[
     df["Country"] == selected_country
 ].iloc[0]
 
 # -------------------------
-# 6. 그래프 데이터 만들기
+# 7. 그래프 데이터 생성
 # -------------------------
 chart_data = pd.DataFrame({
     "MBTI": mbti_types,
@@ -125,7 +127,7 @@ chart_data = chart_data.sort_values(
 ).reset_index(drop=True)
 
 # -------------------------
-# 7. 그래프 색상 설정
+# 8. 그래프 색상 설정
 # -------------------------
 green_colors = [
     "#16834A",
@@ -151,7 +153,7 @@ colors = (
 )
 
 # -------------------------
-# 8. 최고 비율 정보
+# 9. 최고 비율 표시
 # -------------------------
 top_mbti = chart_data.iloc[0]
 
@@ -178,7 +180,7 @@ with col3:
 st.divider()
 
 # -------------------------
-# 9. 막대그래프
+# 10. 막대그래프
 # -------------------------
 st.subheader(
     f"📊 {selected_country}의 MBTI 비율"
@@ -232,11 +234,10 @@ st.plotly_chart(
 )
 
 # -------------------------
-# 10. 상세 데이터 표
+# 11. 상세 데이터 표
 # -------------------------
-with st.expander(
-    "📋 MBTI 비율 자세히 보기"
-):
+with st.expander("📋 MBTI 비율 자세히 보기"):
+
     display_data = chart_data.copy()
 
     display_data["비율"] = display_data[
@@ -250,9 +251,8 @@ with st.expander(
     )
 
 # -------------------------
-# 11. 안내 문구
+# 12. 안내 문구
 # -------------------------
 st.caption(
     "※ 본 결과는 제공된 CSV 데이터에 기반한 통계입니다."
 )
-
