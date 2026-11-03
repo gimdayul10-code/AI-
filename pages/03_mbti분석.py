@@ -25,7 +25,7 @@ st.write(
 # -------------------------
 # 3. CSV 데이터 불러오기
 # -------------------------
-CSV_FILE = Path(__file__).parent / "countriesMBTI_16types(2).csv"
+CSV_FILE = Path(__file__).parent / "countriesMBTI_16types.csv"
 
 @st.cache_data
 def load_data(file_path):
