@@ -40,7 +40,7 @@ try:
 except FileNotFoundError:
     st.error("❌ CSV 파일을 찾을 수 없습니다.")
     st.info(
-        "countriesMBTI_16types(2).csv 파일을 "
+        "countriesMBTI_16types.csv 파일을 "
         "app.py와 같은 폴더에 업로드해 주세요."
     )
     st.stop()
