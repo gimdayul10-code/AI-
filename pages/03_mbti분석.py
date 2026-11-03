@@ -26,7 +26,7 @@ st.write(
 # 3. CSV 파일 경로 설정
 # -------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
-CSV_FILE = BASE_DIR / "countriesMBTI_16types(2).csv"
+CSV_FILE = BASE_DIR / "countriesMBTI_16types.csv"
 
 # -------------------------
 # 4. CSV 데이터 불러오기
