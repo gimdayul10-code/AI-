@@ -20,10 +20,10 @@ st.set_page_config(
 BASE_DIR = Path(__file__).resolve().parent
 
 possible_files = [
-    BASE_DIR / "population.csv",
-    BASE_DIR / "population(2).csv",
-    BASE_DIR / "pages" / "population.csv",
-    BASE_DIR / "pages" / "population(2).csv"
+    BASE_DIR / "population",
+    BASE_DIR / "population",
+    BASE_DIR / "pages" / "population",
+    BASE_DIR / "pages" / "population"
 ]
 
 CSV_FILE = next(
@@ -33,7 +33,7 @@ CSV_FILE = next(
 
 if CSV_FILE is None:
     st.error("❌ CSV 파일을 찾을 수 없습니다.")
-    st.write("깃허브에 population.csv 또는 population(2).csv 파일을 업로드해주세요.")
+    st.write("깃허브에 population 또는 population 파일을 업로드해주세요.")
     st.stop()
 
 
