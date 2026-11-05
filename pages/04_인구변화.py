@@ -18,7 +18,7 @@ st.set_page_config(
 # 2. CSV 파일 경로
 # --------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-CSV_FILE = BASE_DIR / "population(2).csv"
+CSV_FILE = BASE_DIR / "population.csv"
 
 # --------------------------------
 # 3. 데이터 불러오기
