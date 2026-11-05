@@ -57,7 +57,7 @@ def load_data():
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error("population(2).csv 파일을 찾을 수 없습니다.")
+    st.error("population.csv 파일을 찾을 수 없습니다.")
     st.stop()
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
