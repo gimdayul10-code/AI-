@@ -341,3 +341,51 @@ with st.expander("📋 연령별 인구 데이터 확인하기"):
 st.caption(
     "📊 자료: 제공된 성북구 인구 통계 CSV 파일"
 )
+
+# --------------------------------
+# CSV 파일 자동 검색
+# --------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+
+# 현재 폴더와 상위 폴더에서 CSV 검색
+search_dirs = [
+    BASE_DIR,
+    BASE_DIR.parent,
+    BASE_DIR.parent.parent
+]
+
+CSV_FILE = None
+
+for folder in search_dirs:
+    possible_files = [
+        folder / "population.csv",
+        folder / "population(2).csv"
+    ]
+
+    for file in possible_files:
+        if file.exists():
+            CSV_FILE = file
+            break
+
+    if CSV_FILE is not None:
+        break
+
+# 그래도 찾지 못하면 하위 폴더까지 검색
+if CSV_FILE is None:
+    for folder in search_dirs:
+        if folder.exists():
+            matches = list(folder.glob("**/population*.csv"))
+            if matches:
+                CSV_FILE = matches[0]
+                break
+
+if CSV_FILE is None:
+    st.error("❌ CSV 파일을 찾을 수 없습니다.")
+    st.write("현재 검색한 위치:", str(BASE_DIR))
+    st.write("검색한 폴더:")
+    for folder in search_dirs:
+        st.write(str(folder))
+    st.stop()
+
+st.success(f"✅ CSV 파일 발견: {CSV_FILE.name}")
+
