@@ -21,7 +21,7 @@ st.set_page_config(
 BASE_DIR = Path(__file__).resolve().parent
 
 # CSV 파일은 pages의 상위 폴더에 있음
-CSV_FILE = BASE_DIR.parent / "population(2).csv"
+CSV_FILE = BASE_DIR.parent / "population.csv"
 
 # 파일 존재 여부 확인
 if not CSV_FILE.exists():
