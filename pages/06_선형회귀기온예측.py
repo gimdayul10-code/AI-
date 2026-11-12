@@ -2,7 +2,33 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+import urllib.request
+import os
 from sklearn.linear_model import LinearRegression
+
+# ==========================================
+# 0. 나눔고딕 폰트 자동 다운로드 및 설정 (한글 깨짐 방지)
+# ==========================================
+@st.cache_resource
+def setup_korean_font():
+    font_path = "NanumGothic.ttf"
+    if not os.path.exists(font_path):
+        # 나눔고딕 폰트 다운로드 링크
+        url = "https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf"
+        try:
+            urllib.request.urlretrieve(url, font_path)
+        except Exception as e:
+            pass
+            
+    if os.path.exists(font_path):
+        fm.fontManager.addfont(font_path)
+        plt.rc('font', family='NanumnGothic' if 'NanumnGothic' in [f.name for f in fm.fontManager.ttflist] else 'NanumGothic')
+    
+    # 마이너스(-) 기호 깨짐 방지
+    plt.rcParams['axes.unicode_minus'] = False
+
+setup_korean_font()
 
 # 페이지 설정
 st.set_page_config(page_title="월별 기온 예측 앱", layout="wide")
@@ -130,3 +156,4 @@ if df is not None:
 
     else:
         st.warning(f"선택하신 {selected_month}월에 해당하는 데이터가 존재하지 않습니다.")
+        
