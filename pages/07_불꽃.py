@@ -7,12 +7,12 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 
 # 페이지 설정
-st.set_page_config(page_title="Iris 품종 예측 앱", page_icon="🌸", layout="centered")
+st.set_page_config(page_title="Iris 품종 예측 및 비교 앱", page_icon="🌸", layout="centered")
 
-st.title("🌸 Iris(붓꽃) 품종 예측 앱")
-st.write("사용자가 입력한 **꽃잎 길이**와 **꽃잎 너비**를 바탕으로 선택한 머신러닝 모델이 붓꽃의 품종을 예측해 드립니다!")
+st.title("🌸 Iris(붓꽃) 품종 예측 및 비교 앱")
+st.write("사용자가 입력한 특성을 바탕으로 **3가지 머신러닝 알고리즘의 예측 결과를 한눈에 비교**해 드립니다!")
 
-# 데이터 로드 및 3가지 모델 학습 함수
+# 데이터 로드 및 모델 학습 함수
 @st.cache_resource
 def load_data_and_models():
     try:
@@ -20,126 +20,169 @@ def load_data_and_models():
     except:
         df = pd.read_csv('Iris.csv', encoding='utf-8')
     
-    X = df[['꽃잎 길이', '꽃잎너비']]
     y = df['품종']
     
-    # 3가지 분류 알고리즘 정의 및 학습
-    models = {
+    # 1) 꽃잎 특성 모델 (꽃잎 길이, 꽃잎너비)
+    X_petal = df[['꽃잎 길이', '꽃잎너비']]
+    models_petal = {
         "랜덤 포레스트 (Random Forest)": RandomForestClassifier(random_state=42),
         "서포트 벡터 머신 (SVM)": SVC(probability=True, random_state=42),
         "K-최근접 이웃 (KNN)": KNeighborsClassifier(n_neighbors=5)
     }
-    
-    for name, model in models.items():
-        model.fit(X, y)
+    for m in models_petal.values():
+        m.fit(X_petal, y)
         
-    return df, models
+    # 2) 꽃받침 특성 모델 (꽃받침 길이, 꽃받침 너비)
+    X_sepal = df[['꽃받침 길이', '꽃받침 너비']]
+    models_sepal = {
+        "랜덤 포레스트 (Random Forest)": RandomForestClassifier(random_state=42),
+        "서포트 벡터 머신 (SVM)": SVC(probability=True, random_state=42),
+        "K-최근접 이웃 (KNN)": KNeighborsClassifier(n_neighbors=5)
+    }
+    for m in models_sepal.values():
+        m.fit(X_sepal, y)
+        
+    return df, models_petal, models_sepal
 
-df, models = load_data_and_models()
+df, models_petal, models_sepal = load_data_and_models()
 
-# 1. 알고리즘 선택 UI
-st.subheader("🤖 1. 예측 알고리즘 선택")
-selected_algo = st.selectbox(
-    "사용할 분류 알고리즘을 선택하세요:",
-    list(models.keys())
-)
-
-# 2. 선택된 알고리즘에 대한 설명 및 원리 안내
+# 알고리즘 설명 데이터
 algo_info = {
     "랜덤 포레스트 (Random Forest)": {
         "desc": "여러 개의 의사결정나무(Decision Tree)를 만들어 종합적인 판단을 내리는 **앙상블(Ensemble)** 알고리즘입니다.",
-        "principle": "데이터에서 무작위로 샘플을 뽑아 수많은 의사결정나무를 각각 학습시킨 뒤, 새로운 데이터가 들어오면 모든 나무의 예측 결과를 모아 **다수결(투표)**로 최종 품종을 결정합니다. 단일 나무보다 과적합(Overfitting)에 강하고 정확도가 높습니다."
+        "principle": "무작위로 샘플을 뽑아 수많은 나무를 학습시킨 뒤, 새로운 데이터가 들어오면 **다수결(투표)**로 최종 품종을 결정합니다. 과적합에 강하고 정확도가 높습니다."
     },
     "서포트 벡터 머신 (SVM)": {
         "desc": "데이터 공간에서 서로 다른 품종을 가장 잘 구분하는 **경계선(결정 경계)**을 찾는 알고리즘입니다.",
-        "principle": "각 품종 데이터 그룹 사이의 간격(마진, Margin)이 **최대가 되도록 하는 최적의 경계선**을 찾습니다. 경계선에 가장 가까이 위치한 데이터(서포트 벡터)들이 기준이 되며, 데이터가 비선형적으로 분포할 경우 커널(Kernel) 기법을 통해 고차원으로 매핑하여 깔끔하게 분리합니다."
+        "principle": "품종 데이터 그룹 사이의 간격(마진)이 **최대가 되도록 하는 최적의 경계선**을 찾습니다. 선형 및 비선형 분류에 모두 강력합니다."
     },
     "K-최근접 이웃 (KNN)": {
         "desc": "새로운 데이터가 들어왔을 때, 가장 거리가 가까운 기존 데이터들을 참고하여 분류하는 **거리 기반** 알고리즘입니다.",
-        "principle": "별도의 복잡한 수식을 미리 학습하지 않고 데이터를 저장해 두었다가, 예측할 때 입력값과 유클리드 거리가 **가장 가까운 K개(여기서는 5개)의 이웃 데이터**를 찾습니다. 그 이웃들 중 가장 많이 속한 품종으로 최종 분류합니다."
+        "principle": "입력값과 유클리드 거리가 **가장 가까운 K개(5개)의 이웃**을 찾아, 그 이웃들 중 가장 많은 품종으로 최종 분류합니다."
     }
 }
 
-with st.expander(f"📖 '{selected_algo}' 설명 및 작동 원리 보기", expanded=True):
-    st.markdown(f"**💡 알고리즘 설명:** {algo_info[selected_algo]['desc']}")
-    st.markdown(f"**⚙️ 작동 원리:** {algo_info[selected_algo]['principle']}")
+# 탭 생성
+tab1, tab2 = st.tabs(["🍃 탭 1: 꽃잎 크기 (비교 분석)", "🌿 탭 2: 꽃받침 크기 (비교 분석)"])
 
-st.divider()
-
-# 3. 사용자가 입력할 수 있는 값의 범위 안내
-st.subheader("📌 2. 입력 가능한 값의 범위 (데이터셋 기준)")
-min_len, max_len = float(df['꽃잎 길이'].min()), float(df['꽃잎 길이'].max())
-min_wid, max_wid = float(df['꽃잎너비'].min()), float(df['꽃잎너비'].max())
-
-st.info(
-    f"- **꽃잎 길이 (Petal Length):** {min_len} cm ~ {max_len} cm\n"
-    f"- **꽃잎 너비 (Petal Width):** {min_wid} cm ~ {max_wid} cm"
-)
-
-# 4. 사용자 입력 받기
-st.subheader("🎛️ 3. 꽃잎 크기 입력")
-col1, col2 = st.columns(2)
-with col1:
-    petal_length = st.number_input(
-        "꽃잎 길이 (cm)", 
-        min_value=min_len, 
-        max_value=max_len, 
-        value=float(df['꽃잎 길이'].mean()),
-        step=0.1
-    )
-with col2:
-    petal_width = st.number_input(
-        "꽃잎 너비 (cm)", 
-        min_value=min_wid, 
-        max_value=max_wid, 
-        value=float(df['꽃잎너비'].mean()),
-        step=0.1
-    )
-
-# 예측 실행
-model = models[selected_algo]
-
-if st.button("품종 예측하기", type="primary"):
-    input_data = pd.DataFrame([[petal_length, petal_width]], columns=['꽃잎 길이', '꽃잎너비'])
-    prediction = model.predict(input_data)[0]
-    probabilities = model.predict_proba(input_data)[0]
+# ==================== [탭 1] 꽃잎 분석 및 비교 ====================
+with tab1:
+    st.header("🍃 꽃잎(Petal) 속성 기반 3개 알고리즘 비교")
     
-    st.success(f"🎉 **{selected_algo}** 모델이 예측한 품종은 **{prediction}** 입니다!")
+    with st.expander("📖 사용된 3가지 알고리즘 설명 및 원리 보기", expanded=False):
+        for name, info in algo_info.items():
+            st.markdown(f"### **{name}**")
+            st.markdown(f"- **설명:** {info['desc']}")
+            st.markdown(f"- **원리:** {info['principle']}")
+            st.divider()
+
+    min_len_p, max_len_p = float(df['꽃잎 길이'].min()), float(df['꽃잎 길이'].max())
+    min_wid_p, max_wid_p = float(df['꽃잎너비'].min()), float(df['꽃잎너비'].max())
     
-    # 예측 확률 표시
-    st.write("### 📊 품종별 예측 확률")
-    for idx, class_name in enumerate(model.classes_):
-        st.progress(float(probabilities[idx]), text=f"{class_name}: {probabilities[idx]*100:.1f}%")
+    st.info(f"- **꽃잎 길이 범위:** {min_len_p} cm ~ {max_len_p} cm\n- **꽃잎 너비 범위:** {min_wid_p} cm ~ {max_wid_p} cm")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        p_len = st.number_input("꽃잎 길이 (cm)", min_value=min_len_p, max_value=max_len_p, value=float(df['꽃잎 길이'].mean()), step=0.1, key="p_len")
+    with col2:
+        p_wid = st.number_input("꽃잎 너비 (cm)", min_value=min_wid_p, max_value=max_wid_p, value=float(df['꽃잎너비'].mean()), step=0.1, key="p_wid")
+        
+    if st.button("꽃잎 기준으로 3개 모델 예측 결과 비교하기", type="primary", key="btn_p"):
+        input_data = pd.DataFrame([[p_len, p_wid]], columns=['꽃잎 길이', '꽃잎너비'])
+        
+        st.subheader("📊 3개 알고리즘 예측 결과 비교")
+        comparison_results = []
+        
+        for name, model in models_petal.items():
+            pred = model.predict(input_data)[0]
+            probs = model.predict_proba(input_data)[0]
+            max_prob = max(probs) * 100
+            comparison_results.append({
+                "알고리즘": name,
+                "예측 품종": pred,
+                "확신도(최고 확률)": f"{max_prob:.1f}%"
+            })
+            
+        # 표 형식으로 비교 제공
+        st.table(pd.DataFrame(comparison_results))
+        
+        # 상세 확률 바 표시
+        for name, model in models_petal.items():
+            pred = model.predict(input_data)[0]
+            probs = model.predict_proba(input_data)[0]
+            with st.container():
+                st.markdown(f"**🤖 {name}** (예측: **{pred}**)")
+                cols = st.columns(len(model.classes_))
+                for idx, c_name in enumerate(model.classes_):
+                    cols[idx].metric(label=c_name, value=f"{probs[idx]*100:.1f}%")
+                st.divider()
+            
+    st.subheader("📈 꽃잎 데이터 분포 및 내 입력 위치")
+    fig1, ax1 = plt.subplots(figsize=(7, 5))
+    sns.scatterplot(data=df, x='꽃잎 길이', y='꽃잎너비', hue='품종', palette='Set2', style='품종', s=70, ax=ax1)
+    ax1.scatter([p_len], [p_wid], color='green', marker='*', s=300, edgecolor='black', label='My Input', zorder=5)
+    ax1.set_title("Petal Length vs Petal Width")
+    ax1.set_xlabel("Petal Length (cm)")
+    ax1.set_ylabel("Petal Width (cm)")
+    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    st.pyplot(fig1)
 
-# 5. 그래프 시각화 (사용자 입력값을 초록별로 표시)
-st.subheader("📈 4. 데이터 분포 및 내 입력 위치 시각화")
-fig, ax = plt.subplots(figsize=(8, 6))
-
-sns.scatterplot(
-    data=df, 
-    x='꽃잎 길이', 
-    y='꽃잎너비', 
-    hue='품종', 
-    palette='Set2', 
-    style='품종',
-    s=70, 
-    ax=ax
-)
-
-# 사용자가 입력한 값을 초록색 별표(*)로 표시
-ax.scatter(
-    [petal_length], 
-    [petal_width], 
-    color='green', 
-    marker='*', 
-    s=300, 
-    edgecolor='black',
-    label='My Input', 
-    zorder=5
-)
-
-ax.set_title(f"Iris Distribution & Prediction ({selected_algo.split()[0]})")
-ax.set_xlabel("Petal Length (cm)")
-ax.set_ylabel("Petal Width (cm)")
-ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-st.pyplot(fig)
+# ==================== [탭 2] 꽃받침 분석 및 비교 ====================
+with tab2:
+    st.header("🌿 꽃받침(Sepal) 속성 기반 3개 알고리즘 비교")
+    
+    with st.expander("📖 사용된 3가지 알고리즘 설명 및 원리 보기", expanded=False):
+        for name, info in algo_info.items():
+            st.markdown(f"### **{name}**")
+            st.markdown(f"- **설명:** {info['desc']}")
+            st.markdown(f"- **원리:** {info['principle']}")
+            st.divider()
+        
+    min_len_s, max_len_s = float(df['꽃받침 길이'].min()), float(df['꽃받침 길이'].max())
+    min_wid_s, max_wid_s = float(df['꽃받침 너비'].min()), float(df['꽃받침 너비'].max())
+    
+    st.info(f"- **꽃받침 길이 범위:** {min_len_s} cm ~ {max_len_s} cm\n- **꽃받침 너비 범위:** {min_wid_s} cm ~ {max_wid_s} cm")
+    
+    col3, col4 = st.columns(2)
+    with col3:
+        s_len = st.number_input("꽃받침 길이 (cm)", min_value=min_len_s, max_value=max_len_s, value=float(df['꽃받침 길이'].mean()), step=0.1, key="s_len")
+    with col4:
+        s_wid = st.number_input("꽃받침 너비 (cm)", min_value=min_wid_s, max_value=max_wid_s, value=float(df['꽃받침 너비'].mean()), step=0.1, key="s_wid")
+        
+    if st.button("꽃받침 기준으로 3개 모델 예측 결과 비교하기", type="primary", key="btn_s"):
+        input_data_s = pd.DataFrame([[s_len, s_wid]], columns=['꽃받침 길이', '꽃받침 너비'])
+        
+        st.subheader("📊 3개 알고리즘 예측 결과 비교")
+        comparison_results_s = []
+        
+        for name, model in models_sepal.items():
+            pred = model.predict(input_data_s)[0]
+            probs = model.predict_proba(input_data_s)[0]
+            max_prob = max(probs) * 100
+            comparison_results_s.append({
+                "알고리즘": name,
+                "예측 품종": pred,
+                "확신도(최고 확률)": f"{max_prob:.1f}%"
+            })
+            
+        st.table(pd.DataFrame(comparison_results_s))
+        
+        for name, model in models_sepal.items():
+            pred = model.predict(input_data_s)[0]
+            probs = model.predict_proba(input_data_s)[0]
+            with st.container():
+                st.markdown(f"**🤖 {name}** (예측: **{pred}**)")
+                cols = st.columns(len(model.classes_))
+                for idx, c_name in enumerate(model.classes_):
+                    cols[idx].metric(label=c_name, value=f"{probs[idx]*100:.1f}%")
+                st.divider()
+            
+    st.subheader("📈 꽃받침 데이터 분포 및 내 입력 위치")
+    fig2, ax2 = plt.subplots(figsize=(7, 5))
+    sns.scatterplot(data=df, x='꽃받침 길이', y='꽃받침 너비', hue='품종', palette='Set1', style='품종', s=70, ax=ax2)
+    ax2.scatter([s_len], [s_wid], color='green', marker='*', s=300, edgecolor='black', label='My Input', zorder=5)
+    ax2.set_title("Sepal Length vs Sepal Width")
+    ax2.set_xlabel("Sepal Length (cm)")
+    ax2.set_ylabel("Sepal Width (cm)")
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    st.pyplot(fig2)
