@@ -115,87 +115,16 @@ def render_nutrient_page(tab_key, nutrient_col, unit, label_text, default_val, c
     top_df = filtered_df.head(15).copy()
     top_df['음식명 (추천)'] = top_df['식품명'].apply(lambda name: f"{get_food_emoji(name)} {name}")
     
-    # 화면 구성: 왼쪽(음식 및 탄단지 표), 오른쪽(그래프)
-    left_col, right_col = st.columns([1.2, 1])
+    # [상단] 표 영역 - 가로 전체 사용 및 높이 확대
+    st.markdown("#### 📋 추천 음식 및 탄·단·지 영양성분")
+    display_df = top_df[[
+        '음식명 (추천)', '에너지(kcal)', '탄수화물(g)', '단백질(g)', '지방(g)', '영양성분함량기준량'
+    ]].rename(columns={
+        '에너지(kcal)': '칼로리(kcal)',
+        '탄수화물(g)': '탄수화물(g)',
+        '단백질(g)': '단백질(g)',
+        '지방(g)': '지방(g)',
+        '영양성분함량기준량': '기준량'
+    })
+    st.dataframe(display_df, use_container_width=True, height=52
     
-    with left_col:
-        st.markdown("#### 📋 추천 음식 및 탄·단·지 영양성분")
-        display_df = top_df[[
-            '음식명 (추천)', '에너지(kcal)', '탄수화물(g)', '단백질(g)', '지방(g)', '영양성분함량기준량'
-        ]].rename(columns={
-            '에너지(kcal)': '칼로리(kcal)',
-            '탄수화물(g)': '탄수화물(g)',
-            '단백질(g)': '단백질(g)',
-            '지방(g)': '지방(g)',
-            '영양성분함량기준량': '기준량'
-        })
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
-        
-    with right_col:
-        st.markdown(f"#### 📊 {chart_title}")
-        chart_df = top_df.head(10).copy()
-        # 그래프 라벨이 너무 길지 않게 축약
-        chart_df['짧은이름'] = chart_df['음식명 (추천)'].apply(lambda x: x[:16] + '..' if len(x) > 16 else x)
-        
-        fig = px.bar(
-            chart_df,
-            x=['탄수화물(g)', '단백질(g)', '지방(g)'],
-            y='짧은이름',
-            orientation='h',
-            title=chart_title,
-            labels={'value': '함량 (g)', '짧은이름': '음식명', 'variable': '영양성분'},
-            color_discrete_map={
-                '탄수화물(g)': '#FFB347',
-                '단백질(g)': '#FF6961',
-                '지방(g)': '#77DD77'
-            },
-            barmode='group'
-        )
-        fig.update_layout(
-            yaxis={'categoryorder': 'total ascending'},
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=10, r=10, t=50, b=10),
-            height=450
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-# 7. 4개 탭 각각 렌더링
-with tab1:
-    render_nutrient_page(
-        tab_key="cal",
-        nutrient_col="에너지(kcal)",
-        unit="kcal",
-        label_text="칼로리",
-        default_val=300,
-        chart_title="🔥 가볍고 맛있게! 칼로리 맞춤 음식 탄·단·지 밸런스"
-    )
-
-with tab2:
-    render_nutrient_page(
-        tab_key="carb",
-        nutrient_col="탄수화물(g)",
-        unit="g",
-        label_text="탄수화물",
-        default_val=30,
-        chart_title="🍚 든든한 에너지원! 탄수화물 맞춤 음식 영양 비교"
-    )
-
-with tab3:
-    render_nutrient_page(
-        tab_key="prot",
-        nutrient_col="단백질(g)",
-        unit="g",
-        label_text="단백질",
-        default_val=25,
-        chart_title="🥩 득근을 위한 선택! 단백질 맞춤 음식 영양 구성"
-    )
-
-with tab4:
-    render_nutrient_page(
-        tab_key="fat",
-        nutrient_col="지방(g)",
-        unit="g",
-        label_text="지방",
-        default_val=15,
-        chart_title="🥑 건강한 지방 섭취! 지방 맞춤 음식 영양 분포"
-    )
