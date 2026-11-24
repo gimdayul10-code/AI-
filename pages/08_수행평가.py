@@ -52,7 +52,7 @@ def get_food_emoji(food_name):
     for key, emoji in emoji_map.items():
         if key in str(food_name):
             return emoji
-    return '🍽️'  # 기본 이모티콘
+    return '🍽️'
 
 # 데이터 불러오기
 df = load_data()
@@ -73,7 +73,6 @@ tab1, tab2, tab3, tab4 = st.tabs([
 def render_nutrient_page(tab_key, nutrient_col, unit, label_text, default_val, chart_title):
     st.subheader(f"✨ {label_text} 기준 맞춤형 음식 찾기")
     
-    # 입력칸(왼쪽)과 선택지(오른쪽) 배치
     col1, col2 = st.columns([1, 1])
     with col1:
         max_val = st.number_input(
@@ -92,13 +91,11 @@ def render_nutrient_page(tab_key, nutrient_col, unit, label_text, default_val, c
             key=f"radio_{tab_key}"
         )
     
-    # 조건 필터링 (사용자 입력값 이하 & 카테고리 일치)
     filtered_df = df[
         (df[nutrient_col] <= max_val) & 
         (df['카테고리'] == category_choice)
     ].copy()
     
-    # 해당 영양성분이 0인 단순 물/차 등을 제외하고 유의미한 음식 상위 정렬
     filtered_df = filtered_df[filtered_df[nutrient_col] > 0].sort_values(
         by=nutrient_col, ascending=False
     )
@@ -111,11 +108,10 @@ def render_nutrient_page(tab_key, nutrient_col, unit, label_text, default_val, c
     
     st.success(f"🎉 조건에 맞는 **{category_choice}** 음식 총 **{len(filtered_df):,}개**를 찾았습니다! (상위 15개 표시)")
     
-    # 상위 15개 추출 및 귀여운 이모티콘 결합
     top_df = filtered_df.head(15).copy()
     top_df['음식명 (추천)'] = top_df['식품명'].apply(lambda name: f"{get_food_emoji(name)} {name}")
     
-    # [상단] 표 영역 - 가로 전체 사용 및 높이 확대
+    # [상단] 표 영역 (가로 전체 및 높이 지정)
     st.markdown("#### 📋 추천 음식 및 탄·단·지 영양성분")
     display_df = top_df[[
         '음식명 (추천)', '에너지(kcal)', '탄수화물(g)', '단백질(g)', '지방(g)', '영양성분함량기준량'
@@ -126,5 +122,74 @@ def render_nutrient_page(tab_key, nutrient_col, unit, label_text, default_val, c
         '지방(g)': '지방(g)',
         '영양성분함량기준량': '기준량'
     })
-    st.dataframe(display_df, use_container_width=True, height=52
+    st.dataframe(display_df, use_container_width=True, height=520, hide_index=True)
     
+    st.write("")
+    
+    # [하단] 그래프 영역 (표 밑에 배치)
+    st.markdown(f"#### 📊 {chart_title}")
+    chart_df = top_df.head(10).copy()
+    chart_df['짧은이름'] = chart_df['음식명 (추천)'].apply(lambda x: x[:22] + '..' if len(x) > 22 else x)
+    
+    fig = px.bar(
+        chart_df,
+        x=['탄수화물(g)', '단백질(g)', '지방(g)'],
+        y='짧은이름',
+        orientation='h',
+        title=chart_title,
+        labels={'value': '함량 (g)', '짧은이름': '음식명', 'variable': '영양성분'},
+        color_discrete_map={
+            '탄수화물(g)': '#FFB347',
+            '단백질(g)': '#FF6961',
+            '지방(g)': '#77DD77'
+        },
+        barmode='group'
+    )
+    fig.update_layout(
+        yaxis={'categoryorder': 'total ascending'},
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=10, r=10, t=60, b=10),
+        height=480
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# 7. 4개 탭 각각 렌더링
+with tab1:
+    render_nutrient_page(
+        tab_key="cal",
+        nutrient_col="에너지(kcal)",
+        unit="kcal",
+        label_text="칼로리",
+        default_val=300,
+        chart_title="🔥 가볍고 맛있게! 칼로리 맞춤 음식 탄·단·지 밸런스"
+    )
+
+with tab2:
+    render_nutrient_page(
+        tab_key="carb",
+        nutrient_col="탄수화물(g)",
+        unit="g",
+        label_text="탄수화물",
+        default_val=30,
+        chart_title="🍚 든든한 에너지원! 탄수화물 맞춤 음식 영양 비교"
+    )
+
+with tab3:
+    render_nutrient_page(
+        tab_key="prot",
+        nutrient_col="단백질(g)",
+        unit="g",
+        label_text="단백질",
+        default_val=25,
+        chart_title="🥩 득근을 위한 선택! 단백질 맞춤 음식 영양 구성"
+    )
+
+with tab4:
+    render_nutrient_page(
+        tab_key="fat",
+        nutrient_col="지방(g)",
+        unit="g",
+        label_text="지방",
+        default_val=15,
+        chart_title="🥑 건강한 지방 섭취! 지방 맞춤 음식 영양 분포"
+    )
